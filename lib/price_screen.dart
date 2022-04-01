@@ -13,6 +13,7 @@ class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
   CoinData coinData = CoinData();
   int exchangeRate = 0;
+  List<dynamic> exchange = [0, 0, 0];
 
   DropdownButton<String> androidDropDownButton() {
     List<DropdownMenuItem<String>> dropDownItems = [];
@@ -26,18 +27,20 @@ class _PriceScreenState extends State<PriceScreen> {
       );
       dropDownItems.add(newItem);
     }
-
     return DropdownButton<String>(
       value: selectedCurrency,
       items: dropDownItems,
       onChanged: (value) async {
-        selectedCurrency = value;
-        var coin = await coinData.getCoinData(currencyType: selectedCurrency);
-        var rate = coin['rate'];
-        exchangeRate = rate.toInt();
-        setState(
-          () {},
-        );
+        exchange.clear();
+        for (String crypto in cryptoList) {
+          selectedCurrency = value;
+          var coin = await coinData.getCoinData(
+              currencyType: selectedCurrency, cryptoType: crypto);
+          var rate = coin['rate'];
+          exchangeRate = rate.toInt();
+          exchange.add(exchangeRate);
+        }
+        setState(() {});
       },
     );
   }
@@ -58,9 +61,15 @@ class _PriceScreenState extends State<PriceScreen> {
       itemExtent: 20.0,
       onSelectedItemChanged: (selectedIndex) async {
         selectedCurrency = currenciesList[selectedIndex];
-        var coin = await coinData.getCoinData(currencyType: selectedCurrency);
-        var rate = coin['rate'];
-        exchangeRate = rate.toInt();
+        exchange.clear();
+        for (String crypto in cryptoList) {
+          var coin = await coinData.getCoinData(
+              currencyType: selectedCurrency, cryptoType: crypto);
+          var rate = coin['rate'];
+          exchangeRate = rate.toInt();
+          exchange.add(exchangeRate);
+        }
+        print(exchange);
         setState(() {});
       },
       children: cupertinoItems,
@@ -82,66 +91,18 @@ class _PriceScreenState extends State<PriceScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Padding(
-                padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-                child: Card(
-                  color: Colors.teal,
-                  elevation: 5.0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: FlatButton(
-                    child: Text(
-                      '1 BTC = $exchangeRate $selectedCurrency',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-                child: Card(
-                  color: Colors.teal,
-                  elevation: 5.0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: FlatButton(
-                    child: Text(
-                      '1 ETH = $exchangeRate $selectedCurrency',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-                child: Card(
-                  color: Colors.teal,
-                  elevation: 5.0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: FlatButton(
-                    child: Text(
-                      '1 LTC = $exchangeRate $selectedCurrency',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              CurrencyButton(
+                  cryptoList: cryptoList[0],
+                  exchangeRate: exchange[0],
+                  selectedCurrency: selectedCurrency),
+              CurrencyButton(
+                  cryptoList: cryptoList[1],
+                  exchangeRate: exchange[1],
+                  selectedCurrency: selectedCurrency),
+              CurrencyButton(
+                  cryptoList: cryptoList[2],
+                  exchangeRate: exchange[2],
+                  selectedCurrency: selectedCurrency),
             ],
           ),
           Container(
@@ -152,6 +113,43 @@ class _PriceScreenState extends State<PriceScreen> {
             child: Platform.isIOS ? iOSPicker() : androidDropDownButton(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CurrencyButton extends StatelessWidget {
+  const CurrencyButton({
+    Key key,
+    @required this.exchangeRate,
+    @required this.selectedCurrency,
+    @required this.cryptoList,
+  }) : super(key: key);
+
+  final int exchangeRate;
+  final String selectedCurrency;
+  final String cryptoList;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
+      child: Card(
+        color: Colors.teal,
+        elevation: 5.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: FlatButton(
+          child: Text(
+            '$cryptoList = $exchangeRate $selectedCurrency',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20.0,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
